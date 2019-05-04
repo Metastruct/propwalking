@@ -1,9 +1,27 @@
-local META = FindMetaTable( "Player" )
+local Player = FindMetaTable( "Player" )
+local Entity = FindMetaTable( "Entity" )
 
-function META:SetSurface( ent )
+local function NetworkVar(what,slot,varname)
+	local set = Entity["SetDT"..what]
+	local get = Entity["GetDT"..what]
+	
+	Player["Set"..varname] = function(self,v)
+		return set(self,slot,v)
+	end
+	Player["Get"..varname] = function(self)
+		return get(self,slot)
+	end
+end
+NetworkVar("Entity", 5, "SurfaceEnt")
+NetworkVar("Vector", 5, "SurfaceVelocity")
+NetworkVar("Vector", 6, "SurfaceOffset")
+NetworkVar("Angle", 5, "SurfaceAngle")
+
+function Player:SetSurface( ent )
 
 	if self:GetSurface() ~= ent then
-		self:SetNWEntity( "Surface", ent )
+		-- self:SetNWEntity( "Surface", ent )
+		self:SetSurfaceEnt(ent)
 	end
 
 	if SERVER then
@@ -15,43 +33,36 @@ function META:SetSurface( ent )
 	end
 
 	if IsValid( ent ) then
-		self:SetNWVector( "Surface Offset", ent:WorldToLocal( self:GetPos() ) )
-		self:SetNWAngle( "Surface Angle", ent:GetAngles() )
+		-- self:SetNWVector( "Surface Offset", ent:WorldToLocal( self:GetPos() ) )
+		self:SetSurfaceOffset( ent:WorldToLocal( self:GetPos() ) )
+		-- self:SetNWAngle( "Surface Angle", ent:GetAngles() )
+		self:SetSurfaceAngle( ent:GetAngles() )
 	end
 
 end
 
-function META:GetSurface()
+function Player:GetSurface()
 
-	local ent = self:GetNWEntity( "Surface", ent )
+	-- local ent = self:GetNWEntity( "Surface", ent )
+	local ent = self:GetSurfaceEnt( ent )
 
 	if IsValid( ent ) then
-		return ent, ent:LocalToWorld( self:GetNWVector( "Surface Offset", vector_origin ) ), self:GetNWAngle( "Surface Angle", angle_zero )
+		-- return ent, ent:LocalToWorld( self:GetNWVector( "Surface Offset", vector_origin ) ), self:GetNWAngle( "Surface Angle", angle_zero )
+		return ent, ent:LocalToWorld( self:GetSurfaceOffset( vector_origin ) ), self:GetSurfaceAngle( angle_zero )
 	end
 
 	return ent, vector_origin
 
 end
 
-function META:HasSurface()
+function Player:HasSurface()
 
 	return IsValid( self:GetSurface() )
 
 end
 
-function META:SetSurfaceVelocity( vel )
 
-	self:SetNWVector( "Surface Velocity", vel )
-
-end
-
-function META:GetSurfaceVelocity( vel )
-
-	return self:GetNWVector( "Surface Velocity", vector_origin )
-
-end
-
-function META:CheckSurface()
+function Player:CheckSurface()
 
 	local pos = self:GetPos()
 	local mins, maxs = self:GetCollisionBounds()
@@ -73,7 +84,7 @@ function META:CheckSurface()
 
 end
 
-function META:GetMaxGroundSpeed()
+function Player:GetMaxGroundSpeed()
 
 	local speed = self:GetSequenceGroundSpeed( self:GetSequence() )
 

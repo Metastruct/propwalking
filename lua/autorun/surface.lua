@@ -2,6 +2,10 @@ local surface_enable = CreateConVar( "surface_enabled", "1" )
 local sv_gravity, sv_accelerate, sv_friction, sv_stopspeed = GetConVar( "sv_gravity" ), GetConVar( "sv_accelerate" ), GetConVar( "sv_friction" ), GetConVar( "sv_stopspeed" )
 local sv_airaccelerate = GetConVar( "sv_airaccelerate" )
 
+local function CanUse(ply)
+	return ply and ply.GetSurfaceEnt and ply.SetSurfaceEnt and !ply.Leaping and not ply:KeyDown(IN_JUMP)
+end
+
 local MAX_CLIP_PLANES = 5
 
 local function StepCalculate( ply, pos )
@@ -69,7 +73,7 @@ end
 
 local function ApplyGravity( vel )
 
-	vel.z = vel.z - sv_gravity:GetFloat() * FrameTime()
+	vel.z = vel.z - sv_gravity:GetFloat()*.01 * FrameTime()
 
 end
 
@@ -145,6 +149,7 @@ local function AirMove( ply, mv, cmd, vel )
 end
 
 hook.Add( "SetupMove", "Surface", function( ply, mv, cmd )
+	if not CanUse(ply) then return end
 
 	if ply:GetMoveType() ~= MOVETYPE_WALK or not surface_enable:GetBool() then
 		ply:SetSurface( NULL )
@@ -182,6 +187,7 @@ hook.Add( "SetupMove", "Surface", function( ply, mv, cmd )
 end )
 
 hook.Add( "FinishMove", "Surface", function( ply, mv )
+	if not CanUse(ply) then return end
 
 	if not ply:HasSurface() or not surface_enable:GetBool() then return end
 
@@ -236,16 +242,19 @@ local function SetSurfaceViewOrigin( ply, origin, relative )
 end
 
 hook.Add( "CalcView", "Surface Anti-Interpolation", function( ply, origin )
+	if not CanUse(ply) then return end
 	SetSurfaceViewOrigin( ply, origin )
 end )
 
 hook.Add( "CalcViewModelView", "Surface Anti-Interpolation", function( wep, _, relative, _, origin, _ )
+	if not CanUse(LocalPlayer()) then return end
 	SetSurfaceViewOrigin( wep:GetOwner(), origin, relative )
 end )
 
 local DRAWING = false
 
 hook.Add( "PrePlayerDraw", "Surface Anti-Interpolation", function( ply )
+	if not CanUse(ply) then return end
 	if not ply:HasSurface() or DRAWING then return end
 
 	local ent, pos = ply:GetSurface()
