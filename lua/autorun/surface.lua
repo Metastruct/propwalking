@@ -3,7 +3,7 @@ local sv_gravity, sv_accelerate, sv_friction, sv_stopspeed = GetConVar( "sv_grav
 local sv_airaccelerate = GetConVar( "sv_airaccelerate" )
 
 local function CanUse(ply)
-	return ply and ply.GetSurfaceEnt and ply.SetSurfaceEnt and !ply.Leaping and not ply:KeyDown(IN_JUMP)
+	return ply and ply.GetSurfaceEnt and ply.SetSurfaceEnt and !ply.Leaping
 end
 
 local MAX_CLIP_PLANES = 5
@@ -73,7 +73,7 @@ end
 
 local function ApplyGravity( vel )
 
-	vel.z = vel.z - sv_gravity:GetFloat()*.01 * FrameTime()
+	vel.z = vel.z - sv_gravity:GetFloat() * FrameTime()
 
 end
 
@@ -151,7 +151,7 @@ end
 hook.Add( "SetupMove", "Surface", function( ply, mv, cmd )
 	if not CanUse(ply) then return end
 
-	if ply:GetMoveType() ~= MOVETYPE_WALK or not surface_enable:GetBool() then
+	if ply:GetMoveType() ~= MOVETYPE_WALK or not surface_enable:GetBool() or ply:KeyDown(IN_JUMP) then
 		ply:SetSurface( NULL )
 
 		return
@@ -189,7 +189,7 @@ end )
 hook.Add( "FinishMove", "Surface", function( ply, mv )
 	if not CanUse(ply) then return end
 
-	if not ply:HasSurface() or not surface_enable:GetBool() then return end
+	if not ply:HasSurface() or not surface_enable:GetBool() or ply:KeyDown(IN_JUMP) then return end
 
 	-- Reset this to avoid gravity pulling us down
 	mv:SetVelocity( ply:GetSurfaceVelocity() )
